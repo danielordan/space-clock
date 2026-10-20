@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>שעון חלל</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&family=Heebo:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --glow: #7fd8ff;
+    --glow-2: #b28cff;
+    --text: #eaf6ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #02030a; }
+  body { font-family: "Heebo", system-ui, sans-serif; color: var(--text); }
+
+  canvas#space { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ערפיליות */
+  .nebula {
+    position: fixed; border-radius: 50%; filter: blur(80px); opacity: .45;
+    mix-blend-mode: screen; pointer-events: none; animation: drift 40s ease-in-out infinite alternate;
+  }
+  .n1 { width: 60vmax; height: 60vmax; left: -15vmax; top: -20vmax;
+        background: radial-gradient(circle, #5b2bd6 0%, #2a0f6b 40%, transparent 70%); }
+  .n2 { width: 55vmax; height: 55vmax; right: -20vmax; bottom: -25vmax;
+        background: radial-gradient(circle, #0f7fb8 0%, #08325c 45%, transparent 70%); animation-delay: -15s; }
+  .n3 { width: 35vmax; height: 35vmax; right: 10vmax; top: -10vmax;
+        background: radial-gradient(circle, #c23b8a 0%, #4d0f3d 45%, transparent 70%); opacity: .3; animation-delay: -28s; }
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(4vmax, 3vmax) scale(1.12); }
+  }
+
+  /* כוכב לכת */
+  .planet {
+    position: fixed; width: 22vmin; height: 22vmin; left: 8vw; bottom: 10vh; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ffd9a8 0%, #e0794a 35%, #6b2318 70%, #1a0705 100%);
+    box-shadow: inset -3vmin -3vmin 6vmin rgba(0,0,0,.8), 0 0 6vmin rgba(255,140,80,.25);
+    animation: float 12s ease-in-out infinite;
+  }
+  .planet::after {
+    content: ""; position: absolute; left: -45%; top: 42%; width: 190%; height: 16%;
+    border-radius: 50%; border: .6vmin solid rgba(255,220,180,.55);
+    border-top-color: transparent; transform: rotate(-18deg);
+  }
+  @keyframes float { 50% { transform: translateY(-2vmin); } }
+
+  /* ירח קטן */
+  .moon {
+    position: fixed; width: 6vmin; height: 6vmin; right: 12vw; top: 14vh; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffffff, #b9c4d6 45%, #4a5568 100%);
+    box-shadow: inset -1vmin -1vmin 2vmin rgba(0,0,0,.7), 0 0 3vmin rgba(200,220,255,.35);
+  }
+
+  /* השעון */
+  main {
+    position: relative; z-index: 2; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vmin;
+    padding: 0 16px; text-align: center;
+  }
+  .ring {
+    position: absolute; width: min(88vw, 900px); aspect-ratio: 1; border-radius: 50%;
+    border: 1px solid rgba(127,216,255,.12);
+    box-shadow: 0 0 60px rgba(127,216,255,.08) inset;
+    animation: spin 90s linear infinite;
+  }
+  .ring::before {
+    content: ""; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--glow); box-shadow: 0 0 16px 4px var(--glow);
+  }
+  .ring.r2 { width: min(70vw, 700px); animation-duration: 60s; animation-direction: reverse; border-color: rgba(178,140,255,.14); }
+  .ring.r2::before { background: var(--glow-2); box-shadow: 0 0 16px 4px var(--glow-2); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #time {
+    direction: ltr;
+    font-family: "Orbitron", ui-monospace, monospace; font-weight: 800;
+    font-size: clamp(3.5rem, 17vw, 15rem); line-height: 1; letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #ffffff 0%, #bfe9ff 45%, #8a7bff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 18px rgba(127,216,255,.55)) drop-shadow(0 0 50px rgba(138,123,255,.35));
+  }
+  #time .colon { animation: blink 1s steps(1) infinite; }
+  #time .sec { font-size: .38em; vertical-align: .9em; margin-left: .15em; opacity: .85; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  #date {
+    font-size: clamp(1rem, 3vw, 1.8rem); font-weight: 300; letter-spacing: .08em;
+    color: rgba(234,246,255,.8); text-shadow: 0 0 12px rgba(127,216,255,.5);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="nebula n1"></div>
+  <div class="nebula n2"></div>
+  <div class="nebula n3"></div>
+  <div class="moon"></div>
+  <div class="planet"></div>
+
+  <main>
+    <div class="ring"></div>
+    <div class="ring r2"></div>
+    <div id="time">00<span class="colon">:</span>00<span class="sec">00</span></div>
+    <div id="date"></div>
+  </main>
+
+<script>
+  // ---------- שעון ----------
+  const timeEl = document.getElementById('time');
+  const dateEl = document.getElementById('date');
+  const pad = n => String(n).padStart(2, '0');
+  const dateFmt = new Intl.DateTimeFormat('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  function tick() {
+    const d = new Date();
+    timeEl.innerHTML = `${pad(d.getHours())}<span class="colon">:</span>${pad(d.getMinutes())}<span class="sec">${pad(d.getSeconds())}</span>`;
+    dateEl.textContent = dateFmt.format(d);
+  }
+  tick();
+  setTimeout(() => { tick(); setInterval(tick, 1000); }, 1000 - new Date().getMilliseconds());
+
+  // ---------- שדה כוכבים ----------
+  const canvas = document.getElementById('space');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W, H, DPR, stars = [], shooters = [];
+  const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+  const COLORS = ['#ffffff', '#cfe8ff', '#ffe9c4', '#c9c2ff', '#9fd8ff'];
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.width = innerWidth * DPR;
+    H = canvas.height = innerHeight * DPR;
+    const count = Math.floor((innerWidth * innerHeight) / 1800);
+    stars = Array.from({ length: count }, () => {
+      const depth = Math.random();            // 0 = רחוק, 1 = קרוב
+      return {
+        x: Math.random() * W, y: Math.random() * H,
+        r: (0.3 + depth * 1.4) * DPR,
+        depth,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.5 + Math.random() * 2,
+      };
+    });
+  }
+
+  function spawnShooter() {
+    const fromLeft = Math.random() < .5;
+    shooters.push({
+      x: fromLeft ? Math.random() * W * .5 : W * .5 + Math.random() * W * .5,
+      y: Math.random() * H * .4,
+      vx: (fromLeft ? 1 : -1) * (10 + Math.random() * 8) * DPR,
+      vy: (4 + Math.random() * 4) * DPR,
+      life: 1,
+    });
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    mouse.x += (mouse.tx - mouse.x) * 0.05;
+    mouse.y += (mouse.ty - mouse.y) * 0.05;
+
+    for (const s of stars) {
+      // תנועה איטית + פרלקסה לפי עכבר
+      if (!reduceMotion) {
+        s.x -= (0.03 + s.depth * 0.25) * DPR;
+        if (s.x < -5) s.x = W + 5;
+      }
+      const px = s.x + mouse.x * s.depth * 30 * DPR;
+      const py = s.y + mouse.y * s.depth * 30 * DPR;
+      const tw = reduceMotion ? 1 : 0.55 + 0.45 * Math.sin(t / 1000 * s.speed + s.phase);
+
+      ctx.globalAlpha = tw * (0.4 + s.depth * 0.6);
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(px, py, s.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // הילה לכוכבים הבהירים
+      if (s.depth > 0.92) {
+        ctx.globalAlpha = tw * 0.25;
+        ctx.beginPath();
+        ctx.arc(px, py, s.r * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = tw * 0.5;
+        ctx.fillRect(px - s.r * 6, py - 0.3 * DPR, s.r * 12, 0.6 * DPR);
+        ctx.fillRect(px - 0.3 * DPR, py - s.r * 6, 0.6 * DPR, s.r * 12);
+      }
+    }
+
+    // כוכבים נופלים
+    if (!reduceMotion && Math.random() < 0.012) spawnShooter();
+    for (let i = shooters.length - 1; i >= 0; i--) {
+      const m = shooters[i];
+      m.x += m.vx; m.y += m.vy; m.life -= 0.015;
+      if (m.life <= 0) { shooters.splice(i, 1); continue; }
+      const tail = 14;
+      const g = ctx.createLinearGradient(m.x, m.y, m.x - m.vx * tail, m.y - m.vy * tail);
+      g.addColorStop(0, `rgba(255,255,255,${m.life})`);
+      g.addColorStop(1, 'rgba(127,216,255,0)');
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 2 * DPR;
+      ctx.beginPath();
+      ctx.moveTo(m.x, m.y);
+      ctx.lineTo(m.x - m.vx * tail, m.y - m.vy * tail);
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+
+  addEventListener('resize', resize);
+  addEventListener('pointermove', e => {
+    mouse.tx = (e.clientX / innerWidth - 0.5) * 2;
+    mouse.ty = (e.clientY / innerHeight - 0.5) * 2;
+  });
+  resize();
+  requestAnimationFrame(draw);
+</script>
+</body>
+</html>
